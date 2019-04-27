@@ -18,6 +18,8 @@ from PIL import Image, ImageFont, ImageDraw
 from yolo3.model import yolo_eval
 from yolo3.utils import letterbox_image
 
+import tensorflow as tf  
+
 class YOLO(object):
     def __init__(self):
         self.model_path = 'model_data/yolo.h5'
@@ -27,7 +29,7 @@ class YOLO(object):
         self.iou = 0.5
         self.class_names = self._get_class()
         self.anchors = self._get_anchors()
-        self.sess = K.get_session()
+        self.sess = self._get_session()
         self.model_image_size = (416, 416) # fixed size or (None, None)
         self.is_fixed_size = self.model_image_size != (None, None)
         self.boxes, self.scores, self.classes = self.generate()
@@ -46,6 +48,13 @@ class YOLO(object):
             anchors = [float(x) for x in anchors.split(',')]
             anchors = np.array(anchors).reshape(-1, 2)
         return anchors
+
+    def _get_session(self):
+	config = tf.ConfigProto()
+	config.gpu_options.allow_growth = True
+        sess = tf.Session(config=config)
+        K.set_session(sess)
+	return sess
 
     def generate(self):
         model_path = os.path.expanduser(self.model_path)
